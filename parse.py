@@ -7,6 +7,8 @@ from playwright.sync_api import Playwright, sync_playwright
 
 
 def watch_excel():
+    """Открывает и просматривает excel файл, получая нужную информацию и создавая массив данных для дальнейшей обработки"""
+
     excel_file_path = os.path.join('excel_files', 'cdek_prices.xlsx')
     file_to_read = openpyxl.load_workbook(excel_file_path, data_only=True)
     sheet = file_to_read["экспресс"]
@@ -25,18 +27,22 @@ def watch_excel():
             weight = sheet.cell(ship_row, ship_col).value
             weights.append([{'weight': weight, 'col': ship_col}])
 
-    run_checking_prices(cityes, weights)
+    return cityes, weights
 
 
 def run_checking_prices(cityes, weights):
+    """Запуск playwright в синхронном режиме"""
+
     with sync_playwright() as playwright:
         checking_prices(playwright, cityes, weights)
         return {'status': 'success'}
 
 
 def checking_prices(playwright: Playwright, cityes, weights) -> None:
+    """Запускает браузер и выполняет действия для парсинга цен основываясь на данные excel файла"""
+
     try:
-        browser = playwright.chromium.launch(headless=True)
+        browser = playwright.chromium.launch(headless=False)
         context = browser.new_context()
         page = context.new_page()
         excel_file_path = os.path.join('excel_files', 'cdek_prices.xlsx')
@@ -110,4 +116,6 @@ def checking_prices(playwright: Playwright, cityes, weights) -> None:
         pass
 
 
-watch_excel()
+if __name__ == '__main__':
+    cityes, weights = watch_excel()
+    run_checking_prices(cityes, weights)
